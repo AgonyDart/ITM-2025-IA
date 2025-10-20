@@ -1,0 +1,7 @@
+/venv/
+
+# Ignore any folder named "data" or "test" anywhere in the repo
+**/data/
+**/data/**
+**/test/
+**/test/**
