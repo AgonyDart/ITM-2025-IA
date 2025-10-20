@@ -1,1 +1,0 @@
-Ejercicios en clase sobre el algoritmo A* para encontrar el camino más corto entre dos puntos dada una estructura.
