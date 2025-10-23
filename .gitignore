@@ -1,4 +1,5 @@
 /venv/
+/venv12/
 
 # Ignore any folder named "data" or "test" anywhere in the repo
 **/data/
