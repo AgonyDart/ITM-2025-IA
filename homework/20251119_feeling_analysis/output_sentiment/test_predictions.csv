@@ -1,0 +1,41 @@
+ID,text,true_label,pred_nb,pred_svc
+0,Se siente la pasión en cada fotograma.,neutro,neutro,neutro
+1,La seguridad digital es parte de la protesta.,neutro,neutro,neutro
+2,"La protesta es multifactorial, no es solo un tema.",neutro,neutro,neutro
+3,[Actor 1] logra una frialdad increíble como Dr. Frankenstein.,neutro,neutro,neutro
+4,El Monstruo es el espejo de nuestra sociedad.,neutro,neutro,neutro
+5,El estado no respeta nuestros derechos.,neutro,neutro,neutro
+6,La vieja política siempre tratando de manipularnos.,neutro,neutro,neutro
+7,Los drones ofrecen una perspectiva imparcial.,neutro,neutro,neutro
+8,El maquillaje te cuenta toda la historia del sufrimiento del Monstruo.,neutro,neutro,neutro
+9,Es increíble cómo minimizan nuestra voz llamándola 'financiada'.,neutro,neutro,neutro
+10,La inestabilidad es consecuencia de la crisis social.,neutro,neutro,neutro
+11,La mejor cobertura está en los canales independientes.,neutro,neutro,neutro
+12,"Ambos. La calle presiona, la urna decide.",neutro,neutro,neutro
+13,El mundo observa el trato a los manifestantes.,neutro,neutro,neutro
+14,La información real viene de los jóvenes en el lugar.,positivo,neutro,positivo
+15,"La música es épica y melancólica, un 10/10.",neutro,neutro,neutro
+16,Un ser lleno de dolor e inocencia robada.,neutro,neutro,neutro
+17,Verla en la Cineteca es un ritual.,neutro,neutro,neutro
+18,"La versión de Del Toro es increíblemente emotiva, ¡lágrimas garantizadas! #GDTFrankenstein",neutro,neutro,neutro
+19,El diseño de sonido es perturbador y brillante.,neutro,neutro,neutro
+20,"El Dr. es el verdadero villano, un irresponsable narcisista.",neutro,neutro,neutro
+21,La Gen Z trae consigo una nueva forma de hablar y protestar.,neutro,neutro,neutro
+22,La presión de la calle obliga a los medios a reaccionar.,neutro,neutro,neutro
+23,Clerval es la consciencia de Víctor.,neutro,neutro,neutro
+24,Intentan deslegitimar el movimiento a toda costa.,neutro,neutro,neutro
+25,La transmisión en vivo es la nueva crónica.,neutro,neutro,neutro
+26,"La mejor adaptación del clásico en décadas, ¡imperdible!",neutro,neutro,neutro
+27,Blindan el poder en lugar de abrir el diálogo.,neutro,neutro,neutro
+28,"Me copio el look de Victor, muy elegante y oscuro.",neutro,neutro,neutro
+29,Una lección de cómo adaptar un clásico.,neutro,neutro,neutro
+30,"Mi película favorita de GDT, punto.",neutro,neutro,neutro
+31,"El debate en Reddit está encendido, es un signo de éxito.",neutro,neutro,neutro
+32,La tecnología es la mayor diferencia con el 68.,neutro,neutro,neutro
+33,"El hype es real, todos están hablando de ella.",positivo,neutro,positivo
+34,Nos toca a nosotros ser los verificadores.,neutro,neutro,neutro
+35,Un evento cultural imperdible en la Cineteca.,neutro,neutro,neutro
+36,"Gen Z está harta de promesas vacías, es hora de actuar.",neutro,neutro,neutro
+37,El daño al patrimonio es lamentable.,neutro,neutro,neutro
+38,El algoritmo nos unió por la causa.,neutro,neutro,neutro
+39,La banda sonora es tan épica como la historia.,neutro,neutro,neutro

@@ -1,0 +1,22 @@
+date,polarity,sentiment_label,pred_svc
+2025-08-31,0.0,{'neutro': 2},{'neutro': 2}
+2025-10-01,0.0,{'neutro': 2},{'neutro': 2}
+2025-10-23,0.05,{'neutro': 2},{'neutro': 2}
+2025-10-25,0.0,{'neutro': 2},{'neutro': 2}
+2025-10-28,0.05,{'neutro': 2},{'neutro': 2}
+2025-10-30,0.0,{'neutro': 4},{'neutro': 4}
+2025-11-04,0.0,{'neutro': 6},{'neutro': 6}
+2025-11-05,0.0,{'neutro': 8},{'neutro': 8}
+2025-11-06,0.0,{'neutro': 6},{'neutro': 6}
+2025-11-07,0.03125,"{'neutro': 11, 'positivo': 1}",{'neutro': 12}
+2025-11-08,0.025,"{'neutro': 7, 'positivo': 1}","{'neutro': 7, 'positivo': 1}"
+2025-11-09,-0.14583333333333334,"{'neutro': 5, 'negativo': 1}",{'neutro': 6}
+2025-11-10,0.02,"{'neutro': 9, 'positivo': 1}","{'neutro': 9, 'positivo': 1}"
+2025-11-11,0.0,{'neutro': 6},{'neutro': 6}
+2025-11-12,0.0,{'neutro': 6},{'neutro': 6}
+2025-11-13,0.0,{'neutro': 8},{'neutro': 8}
+2025-11-14,0.0,{'neutro': 12},{'neutro': 12}
+2025-11-15,0.017140151515151514,"{'neutro': 22, 'positivo': 2}","{'neutro': 22, 'positivo': 2}"
+2025-11-16,-0.007142857142857145,"{'neutro': 24, 'positivo': 3, 'negativo': 1}","{'neutro': 24, 'positivo': 3, 'negativo': 1}"
+2025-11-17,0.007692307692307693,"{'neutro': 25, 'positivo': 1}","{'neutro': 25, 'positivo': 1}"
+2025-11-18,0.012962962962962963,"{'neutro': 17, 'positivo': 1}","{'neutro': 17, 'positivo': 1}"
