@@ -1,9 +1,9 @@
 import os
 import pandas as pd
 
-DATASET_DIR = "dataset"
+DATASET_DIR = "./data"
 
-CLASSES = ["perro", "gato", "mariquita", "tortuga", "hormiga"]
+CLASSES = ["perro", "gato", "catarina", "tortuga", "hormiga"]
 
 rows = []
 

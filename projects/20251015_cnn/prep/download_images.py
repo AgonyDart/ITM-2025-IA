@@ -7,8 +7,14 @@ import numpy as np
 from tqdm import tqdm
 import shutil
 
-CLASSES = {"tortuga": 100, "mariquita": 100}
-OUTPUT_DIR = "dataset"
+CLASSES = {
+    "dog": 100,
+    "cat": 100,
+    "ladybug": 100,
+    "turtle": 100,
+    "ant": 100,
+}
+OUTPUT_DIR = "./data/"
 
 
 def download_images():
@@ -88,6 +94,10 @@ def remove_duplicates():
         print(f"{cls}: {removed} duplicados eliminados")
 
 
+def resize_image(image, size=(224, 224)):
+    return image.resize(size, Image.ANTIALIAS)
+
+
 def reorganize():
     print("\n---- Reorganizando carpetas ----")
     final_dir = os.path.join(OUTPUT_DIR, "cleaned")
@@ -102,9 +112,16 @@ def reorganize():
             continue
 
         for fname in os.listdir(source):
+            fpath = os.path.join(source, fname)
+            try:
+                img = Image.open(fpath)
+                img_resized = resize_image(img)
+                img_resized.save(fpath)
+            except:
+                continue
             shutil.move(os.path.join(source, fname), os.path.join(target, fname))
 
-    print("Dataset organizado en: dataset/cleaned")
+    print("Dataset organizado en: data/cleaned")
 
 
 if __name__ == "__main__":
