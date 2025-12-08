@@ -3,14 +3,12 @@ import heapq
 from math import sqrt
 import random
 
-# Configuraciones iniciales
 ANCHO_VENTANA = 800
 VENTANA = pygame.display.set_mode((ANCHO_VENTANA, ANCHO_VENTANA))
 pygame.display.set_caption("A*")
 pygame.font.init()
 FUENTE_PEQUEÑA = pygame.font.SysFont("Arial", 12)
 
-# Colores (RGB)
 BLANCO = (255, 255, 255)
 NEGRO = (0, 0, 0)
 GRIS = (128, 128, 128)
@@ -110,13 +108,10 @@ class Nodo:
         self.f = f
 
     def dibujar(self, ventana, mostrar_valores=True):
-        # Dibujar el nodo
         pygame.draw.rect(ventana, self.color, (self.x, self.y, self.ancho, self.ancho))
 
-        # Dibujar borde
         pygame.draw.rect(ventana, GRIS, (self.x, self.y, self.ancho, self.ancho), 1)
 
-        # Mostrar valores si no es inicio, fin o pared
         if (
             mostrar_valores
             and not self.es_inicio()
@@ -203,11 +198,9 @@ def distancia(nodo1, nodo2):
 
 
 def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=True):
-    # Inicializar estructuras de datos
     abiertos = []
     cerrados = set()
 
-    # Inicializar nodo de inicio
     inicio.g = 0
     inicio.h = heuristica(inicio, fin)
     inicio.f = inicio.g + inicio.h
@@ -220,18 +213,15 @@ def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=
     while abiertos and not algoritmo_terminado:
         paso += 1
 
-        # Manejar eventos
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return False
 
-        # Paso 1: Obtener el nodo con menor f de la lista abierta
         nodo_actual = heapq.heappop(abiertos)
         cerrados.add(nodo_actual)
 
-        # Visualización: Marcar nodo actual como procesado
         if not nodo_actual.es_inicio() and not nodo_actual.es_fin():
             nodo_actual.hacer_cerrado()
 
@@ -245,15 +235,12 @@ def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=
         )
         pygame.time.delay(velocidad)
 
-        # Paso 2: Verificar si llegamos al destino
         if nodo_actual == fin:
-            # Reconstruir camino
             camino = []
             while nodo_actual:
                 camino.append(nodo_actual)
                 nodo_actual = nodo_actual.padre
 
-            # Visualizar el camino encontrado
             for i, nodo in enumerate(camino):
                 if not nodo.es_inicio() and not nodo.es_fin():
                     nodo.hacer_camino()
@@ -269,11 +256,9 @@ def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=
 
             return True
 
-        # Paso 3: Explorar vecinos
         vecinos = get_vecinos(nodo_actual, grid)
 
         for i, vecino in enumerate(vecinos):
-            # Visualización: Marcar vecino como visitado
             if (
                 not vecino.es_inicio()
                 and not vecino.es_fin()
@@ -292,27 +277,22 @@ def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=
             )
             pygame.time.delay(velocidad // 2)
 
-            # Si el vecino es una pared o ya fue procesado, lo ignoramos
             if vecino.es_pared() or vecino in cerrados:
                 continue
 
-            # Calcular g tentativo
             g_tentativo = nodo_actual.g + distancia(nodo_actual, vecino)
 
-            # Si encontramos un camino mejor
             if g_tentativo < vecino.g:
                 vecino.padre = nodo_actual
                 vecino.g = g_tentativo
                 vecino.h = heuristica(vecino, fin)
                 vecino.f = vecino.g + vecino.h
 
-                # Si el vecino no está en la lista abierta, lo agregamos
                 if vecino not in abiertos:
                     heapq.heappush(abiertos, vecino)
                     if not vecino.es_fin():
                         vecino.hacer_abierto()
 
-            # Visualización: Actualizar valores del vecino
             dibujar(
                 ventana,
                 grid,
@@ -323,7 +303,6 @@ def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=
             )
             pygame.time.delay(velocidad // 2)
 
-    # Si llegamos aquí, no hay camino
     dibujar(ventana, grid, filas, ancho, mostrar_valores, velocidad)
     pygame.time.delay(1000)
     return False
@@ -391,7 +370,7 @@ def main(ventana, ancho):
                     generar_mapa_random(grid, FILAS, 0.25)
 
             if not algoritmo_corriendo:
-                if pygame.mouse.get_pressed()[0]:  # Click izquierdo
+                if pygame.mouse.get_pressed()[0]:
                     pos = pygame.mouse.get_pos()
                     fila, col = obtener_click_pos(pos, FILAS, ancho)
                     if 0 <= fila < FILAS and 0 <= col < FILAS:
@@ -407,7 +386,7 @@ def main(ventana, ancho):
                         elif nodo != fin and nodo != inicio:
                             nodo.hacer_pared()
 
-                elif pygame.mouse.get_pressed()[2]:  # Click derecho
+                elif pygame.mouse.get_pressed()[2]:
                     pos = pygame.mouse.get_pos()
                     fila, col = obtener_click_pos(pos, FILAS, ancho)
                     if 0 <= fila < FILAS and 0 <= col < FILAS:
