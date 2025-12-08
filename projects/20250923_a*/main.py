@@ -6,19 +6,20 @@ import random
 # Configuraciones iniciales
 ANCHO_VENTANA = 800
 VENTANA = pygame.display.set_mode((ANCHO_VENTANA, ANCHO_VENTANA))
-pygame.display.set_caption("Shortest Path Finder Visualization - A*")
+pygame.display.set_caption("A*")
 pygame.font.init()
-FUENTE_PEQUEÑA = pygame.font.Font(None, 20)
+FUENTE_PEQUEÑA = pygame.font.SysFont("Arial", 12)
 
 # Colores (RGB)
 BLANCO = (255, 255, 255)
 NEGRO = (0, 0, 0)
 GRIS = (128, 128, 128)
-VERDE = (0, 255, 0)
 ROJO = (255, 0, 0)
+VERDE = (0, 255, 0)
+AZUL = (0, 120, 255)
+CELESTE = (173, 216, 230)
 NARANJA = (255, 165, 0)
 PURPURA = (128, 0, 128)
-CELESTE = (100, 149, 237)
 AMARILLO = (255, 255, 0)
 
 
@@ -30,11 +31,15 @@ class Nodo:
         self.y = col * ancho
         self.color = BLANCO
         self.ancho = ancho
+        self.vecinos = []
+
         self.total_filas = total_filas
         self.g = float("inf")
         self.h = 0
         self.f = float("inf")
         self.padre = None
+        self.visitado = False
+        self.procesado = False
 
     def get_pos(self):
         return self.fila, self.col
@@ -47,6 +52,15 @@ class Nodo:
 
     def es_fin(self):
         return self.color == PURPURA
+
+    def es_abierto(self):
+        return self.color == AMARILLO
+
+    def es_cerrado(self):
+        return self.color == PURPURA
+
+    def es_camino(self):
+        return self.color == VERDE
 
     def restablecer(self):
         self.color = BLANCO
@@ -76,20 +90,48 @@ class Nodo:
         if not self.es_inicio() and not self.es_fin():
             self.color = VERDE
 
-    def dibujar(self, ventana):
+    def hacer_visitado(self):
+        if (
+            not self.es_inicio()
+            and not self.es_fin()
+            and not self.es_abierto()
+            and not self.es_cerrado()
+            and not self.es_camino()
+        ):
+            self.color = AMARILLO
+
+    def hacer_procesado(self):
+        if not self.es_inicio() and not self.es_fin() and not self.es_cerrado():
+            self.color = AZUL
+
+    def actualizar_valores(self, g, h, f):
+        self.g = g
+        self.h = h
+        self.f = f
+
+    def dibujar(self, ventana, mostrar_valores=True):
+        # Dibujar el nodo
         pygame.draw.rect(ventana, self.color, (self.x, self.y, self.ancho, self.ancho))
 
+        # Dibujar borde
+        pygame.draw.rect(ventana, GRIS, (self.x, self.y, self.ancho, self.ancho), 1)
+
         # Mostrar valores si no es inicio, fin o pared
-        if not self.es_inicio() and not self.es_fin() and not self.es_pared():
-            if self.g != float("inf"):
-                texto_g = FUENTE_PEQUEÑA.render(f"g:{self.g:.0f}", True, NEGRO)
-                ventana.blit(texto_g, (self.x + 2, self.y + 2))
-            if self.h > 0:
-                texto_h = FUENTE_PEQUEÑA.render(f"h:{self.h:.0f}", True, NEGRO)
-                ventana.blit(texto_h, (self.x + 2, self.y + 12))
+        if (
+            mostrar_valores
+            and not self.es_inicio()
+            and not self.es_fin()
+            and not self.es_pared()
+        ):
             if self.f != float("inf"):
                 texto_f = FUENTE_PEQUEÑA.render(f"f:{self.f:.0f}", True, NEGRO)
-                ventana.blit(texto_f, (self.x + 2, self.y + 22))
+                ventana.blit(texto_f, (self.x + 2, self.y + 2))
+            if self.g != float("inf"):
+                texto_g = FUENTE_PEQUEÑA.render(f"g:{self.g:.0f}", True, NEGRO)
+                ventana.blit(texto_g, (self.x + 2, self.y + 12))
+            if self.h > 0:
+                texto_h = FUENTE_PEQUEÑA.render(f"h:{self.h:.0f}", True, NEGRO)
+                ventana.blit(texto_h, (self.x + 2, self.y + 22))
 
     def __lt__(self, otro):
         return self.f < otro.f
@@ -116,12 +158,11 @@ def dibujar_grid(ventana, filas, ancho):
             )
 
 
-def dibujar(ventana, grid, filas, ancho):
+def dibujar(ventana, grid, filas, ancho, mostrar_valores=True, velocidad=50):
     ventana.fill(BLANCO)
     for fila in grid:
         for nodo in fila:
-            nodo.dibujar(ventana)
-
+            nodo.dibujar(ventana, mostrar_valores)
     dibujar_grid(ventana, filas, ancho)
     pygame.display.update()
 
@@ -161,50 +202,130 @@ def distancia(nodo1, nodo2):
     return 1
 
 
-def a_star(grid, inicio, fin):
+def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=True):
+    # Inicializar estructuras de datos
     abiertos = []
     cerrados = set()
 
+    # Inicializar nodo de inicio
     inicio.g = 0
     inicio.h = heuristica(inicio, fin)
-    inicio.f = inicio.h
+    inicio.f = inicio.g + inicio.h
 
     heapq.heappush(abiertos, inicio)
 
-    while abiertos:
+    paso = 0
+    algoritmo_terminado = False
+
+    while abiertos and not algoritmo_terminado:
+        paso += 1
+
+        # Manejar eventos
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return False
 
+        # Paso 1: Obtener el nodo con menor f de la lista abierta
         nodo_actual = heapq.heappop(abiertos)
         cerrados.add(nodo_actual)
-        nodo_actual.hacer_cerrado()
 
+        # Visualización: Marcar nodo actual como procesado
+        if not nodo_actual.es_inicio() and not nodo_actual.es_fin():
+            nodo_actual.hacer_cerrado()
+
+        dibujar(
+            ventana,
+            grid,
+            filas,
+            ancho,
+            mostrar_valores,
+            velocidad,
+        )
+        pygame.time.delay(velocidad)
+
+        # Paso 2: Verificar si llegamos al destino
         if nodo_actual == fin:
             # Reconstruir camino
-            while nodo_actual.padre:
+            camino = []
+            while nodo_actual:
+                camino.append(nodo_actual)
                 nodo_actual = nodo_actual.padre
-                if not nodo_actual.es_inicio():
-                    nodo_actual.hacer_camino()
+
+            # Visualizar el camino encontrado
+            for i, nodo in enumerate(camino):
+                if not nodo.es_inicio() and not nodo.es_fin():
+                    nodo.hacer_camino()
+                dibujar(
+                    ventana,
+                    grid,
+                    filas,
+                    ancho,
+                    mostrar_valores,
+                    velocidad,
+                )
+                pygame.time.delay(velocidad // 2)
+
             return True
 
-        for vecino in get_vecinos(nodo_actual, grid):
-            if vecino in cerrados or vecino.es_pared():
+        # Paso 3: Explorar vecinos
+        vecinos = get_vecinos(nodo_actual, grid)
+
+        for i, vecino in enumerate(vecinos):
+            # Visualización: Marcar vecino como visitado
+            if (
+                not vecino.es_inicio()
+                and not vecino.es_fin()
+                and not vecino.es_pared()
+                and vecino not in cerrados
+            ):
+                vecino.hacer_visitado()
+
+            dibujar(
+                ventana,
+                grid,
+                filas,
+                ancho,
+                mostrar_valores,
+                velocidad,
+            )
+            pygame.time.delay(velocidad // 2)
+
+            # Si el vecino es una pared o ya fue procesado, lo ignoramos
+            if vecino.es_pared() or vecino in cerrados:
                 continue
 
+            # Calcular g tentativo
             g_tentativo = nodo_actual.g + distancia(nodo_actual, vecino)
 
+            # Si encontramos un camino mejor
             if g_tentativo < vecino.g:
                 vecino.padre = nodo_actual
                 vecino.g = g_tentativo
                 vecino.h = heuristica(vecino, fin)
                 vecino.f = vecino.g + vecino.h
 
+                # Si el vecino no está en la lista abierta, lo agregamos
                 if vecino not in abiertos:
                     heapq.heappush(abiertos, vecino)
                     if not vecino.es_fin():
                         vecino.hacer_abierto()
 
+            # Visualización: Actualizar valores del vecino
+            dibujar(
+                ventana,
+                grid,
+                filas,
+                ancho,
+                mostrar_valores,
+                velocidad,
+            )
+            pygame.time.delay(velocidad // 2)
+
+    # Si llegamos aquí, no hay camino
+    dibujar(ventana, grid, filas, ancho, mostrar_valores, velocidad)
+    pygame.time.delay(1000)
     return False
 
 
@@ -229,6 +350,8 @@ def resetear_valores(grid):
                 nodo.h = 0
                 nodo.f = float("inf")
                 nodo.padre = None
+                nodo.visitado = False
+                nodo.procesado = False
 
 
 def main(ventana, ancho):
@@ -252,14 +375,15 @@ def main(ventana, ancho):
                     if inicio and fin:
                         resetear_valores(grid)
                         algoritmo_corriendo = True
-                        if a_star(grid, inicio, fin):
+                        if a_star(
+                            grid, inicio, fin, ventana, ancho, FILAS, velocidad=50
+                        ):
                             algoritmo_corriendo = False
                         else:
                             corriendo = False
 
                 elif event.key == pygame.K_q:
-                    resetear_valores(grid)
-                    algoritmo_corriendo = False
+                    corriendo = False
 
                 elif event.key == pygame.K_r:
                     inicio = None
