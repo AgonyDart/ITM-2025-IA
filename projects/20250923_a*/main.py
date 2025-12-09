@@ -1,28 +1,24 @@
 import pygame
-import math
-from queue import PriorityQueue
+import heapq
+from math import sqrt
+import random
 
-# Configuraciones iniciales
-ANCHO_VENTANA = 1400
+ANCHO_VENTANA = 800
 VENTANA = pygame.display.set_mode((ANCHO_VENTANA, ANCHO_VENTANA))
-pygame.display.set_caption("Algoritmo A* ")
-
-# Paleta de diseñador (inicio = verde, paredes = negro, otros colores profesionales)
-BLANCO = (250, 250, 250)  # fondo muy claro
-NEGRO = (40, 40, 40)  # paredes / obstáculo
-GRIS = (220, 220, 220)  # líneas de la cuadrícula
-GRIS_CLARO = (245, 245, 245)  # estado por defecto de los nodos
-
-INICIO_VERDE = (46, 204, 113)  # verde esmeralda para el nodo inicio
-FIN_AZUL = (52, 152, 219)  # azul profesional para el nodo fin
-FRONTERA = (241, 196, 15)  # amarillo cálido para la frontera (open set)
-VISITADO = (155, 89, 182)  # púrpura suave para nodos visitados
-CAMINO_COLOR = (26, 188, 156)  # teal para el camino final
-ID_COLOR = (0, 0, 0)  # color del texto del ID
-
-# Fuente para los IDs
+pygame.display.set_caption("A*")
 pygame.font.init()
-FUENTE = pygame.font.SysFont("arial", 14)
+FUENTE_PEQUEÑA = pygame.font.SysFont("Arial", 20)
+
+BLANCO = (255, 255, 255)
+NEGRO = (0, 0, 0)
+GRIS = (128, 128, 128)
+ROJO = (255, 0, 0)
+VERDE = (0, 255, 0)
+AZUL = (0, 120, 255)
+CELESTE = (173, 216, 230)
+NARANJA = (255, 165, 0)
+PURPURA = (128, 0, 128)
+AMARILLO = (255, 255, 0)
 
 
 class Nodo:
@@ -31,160 +27,109 @@ class Nodo:
         self.col = col
         self.x = fila * ancho
         self.y = col * ancho
-        self.color = GRIS_CLARO
+        self.color = BLANCO
         self.ancho = ancho
-        self.total_filas = total_filas
         self.vecinos = []
-        self.id = f"{fila}{col}"  # ID único para cada nodo
+
+        self.total_filas = total_filas
+        self.g = float("inf")
+        self.h = 0
+        self.f = float("inf")
+        self.padre = None
+        self.visitado = False
+        self.procesado = False
 
     def get_pos(self):
         return self.fila, self.col
-
-    def get_id(self):
-        return self.id
 
     def es_pared(self):
         return self.color == NEGRO
 
     def es_inicio(self):
-        return self.color == INICIO_VERDE
+        return self.color == NARANJA
 
     def es_fin(self):
-        return self.color == FIN_AZUL
+        return self.color == PURPURA
+
+    def es_abierto(self):
+        return self.color == AMARILLO
+
+    def es_cerrado(self):
+        return self.color == PURPURA
+
+    def es_camino(self):
+        return self.color == VERDE
 
     def restablecer(self):
-        self.color = GRIS_CLARO
-
-    def hacer_visitado(self):
-        self.color = VISITADO
-
-    def hacer_frontera(self):
-        self.color = FRONTERA
-
-    def hacer_camino(self):
-        self.color = CAMINO_COLOR
+        self.color = BLANCO
+        self.g = float("inf")
+        self.h = 0
+        self.f = float("inf")
+        self.padre = None
 
     def hacer_inicio(self):
-        self.color = INICIO_VERDE
+        self.color = NARANJA
 
     def hacer_pared(self):
         self.color = NEGRO
 
     def hacer_fin(self):
-        self.color = FIN_AZUL
+        self.color = PURPURA
 
-    def dibujar(self, ventana):
+    def hacer_abierto(self):
+        if not self.es_inicio() and not self.es_fin():
+            self.color = CELESTE
+
+    def hacer_cerrado(self):
+        if not self.es_inicio() and not self.es_fin():
+            self.color = ROJO
+
+    def hacer_camino(self):
+        if not self.es_inicio() and not self.es_fin():
+            self.color = VERDE
+
+    def hacer_visitado(self):
+        if (
+            not self.es_inicio()
+            and not self.es_fin()
+            and not self.es_abierto()
+            and not self.es_cerrado()
+            and not self.es_camino()
+        ):
+            self.color = AMARILLO
+
+    def hacer_procesado(self):
+        if not self.es_inicio() and not self.es_fin() and not self.es_cerrado():
+            self.color = AZUL
+
+    def actualizar_valores(self, g, h, f):
+        self.g = g
+        self.h = h
+        self.f = f
+
+    def dibujar(self, ventana, mostrar_valores=True):
         pygame.draw.rect(ventana, self.color, (self.x, self.y, self.ancho, self.ancho))
 
-        # Dibujar el ID del nodo
-        texto = FUENTE.render(self.id, True, ID_COLOR)
-        ventana.blit(texto, (self.x + 3, self.y + 3))
+        pygame.draw.rect(ventana, GRIS, (self.x, self.y, self.ancho, self.ancho), 1)
 
-    def actualizar_vecinos(self, grid):
-        self.vecinos = []
-        # Abajo
         if (
-            self.fila < self.total_filas - 1
-            and not grid[self.fila + 1][self.col].es_pared()
+            mostrar_valores
+            and not self.es_inicio()
+            and not self.es_fin()
+            and not self.es_pared()
         ):
-            self.vecinos.append(grid[self.fila + 1][self.col])
-        # Arriba
-        if self.fila > 0 and not grid[self.fila - 1][self.col].es_pared():
-            self.vecinos.append(grid[self.fila - 1][self.col])
-        # Derecha
-        if (
-            self.col < self.total_filas - 1
-            and not grid[self.fila][self.col + 1].es_pared()
-        ):
-            self.vecinos.append(grid[self.fila][self.col + 1])
-        # Izquierda
-        if self.col > 0 and not grid[self.fila][self.col - 1].es_pared():
-            self.vecinos.append(grid[self.fila][self.col - 1])
+            if self.f != float("inf"):
+                texto_f = FUENTE_PEQUEÑA.render(f"f:{self.f:.0f}", True, NEGRO)
+                ventana.blit(texto_f, (self.x + 2, self.y + 2))
+            if self.g != float("inf"):
+                texto_g = FUENTE_PEQUEÑA.render(f"g:{self.g:.0f}", True, NEGRO)
+                ventana.blit(texto_g, (self.x + 2, self.y + 12))
+            if self.h > 0:
+                texto_h = FUENTE_PEQUEÑA.render(f"h:{self.h:.0f}", True, NEGRO)
+                ventana.blit(texto_h, (self.x + 2, self.y + 22))
 
-
-def heuristica(p1, p2):
-    # Distancia Manhattan
-    x1, y1 = p1
-    x2, y2 = p2
-    return abs(x1 - x2) + abs(y1 - y2)
-
-
-def algoritmo_a_estella(dibujar, grid, inicio, fin):
-    contador = 0
-    frontera = PriorityQueue()
-    frontera.put((0, contador, inicio))
-    procedencia = {}
-    g_score = {nodo: float("inf") for fila in grid for nodo in fila}
-    g_score[inicio] = 0
-    f_score = {nodo: float("inf") for fila in grid for nodo in fila}
-    f_score[inicio] = heuristica(inicio.get_pos(), fin.get_pos())
-
-    frontera_hash = {inicio}
-
-    while not frontera.empty():
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-
-        nodo_actual = frontera.get()[2]
-        frontera_hash.remove(nodo_actual)
-
-        if nodo_actual == fin:
-            camino = reconstruir_camino(procedencia, fin, inicio, dibujar)
-            fin.hacer_fin()
-            inicio.hacer_inicio()
-
-            # Imprimir el camino en consola
-            print("\n" + "=" * 50)
-            print("CAMINO MÁS CORTO ENCONTRADO:")
-            print("=" * 50)
-            ids_camino = [nodo.get_id() for nodo in camino]
-            print(" -> ".join(ids_camino))
-            print(f"Longitud del camino: {len(camino)} nodos")
-            print("=" * 50 + "\n")
-
-            return True
-
-        for vecino in nodo_actual.vecinos:
-            g_temp = g_score[nodo_actual] + 1
-
-            if g_temp < g_score[vecino]:
-                procedencia[vecino] = nodo_actual
-                g_score[vecino] = g_temp
-                f_score[vecino] = g_temp + heuristica(vecino.get_pos(), fin.get_pos())
-                if vecino not in frontera_hash:
-                    contador += 1
-                    frontera.put((f_score[vecino], contador, vecino))
-                    frontera_hash.add(vecino)
-                    vecino.hacer_frontera()
-
-        dibujar()
-
-        if nodo_actual != inicio:
-            nodo_actual.hacer_visitado()
-
-    print("\n❌ No se encontró camino posible entre inicio y fin")
-    return False
-
-
-def reconstruir_camino(procedencia, nodo_actual, inicio, dibujar):
-    camino = []
-    current = nodo_actual
-
-    # Reconstruir el camino desde el fin hasta el inicio
-    while current in procedencia:
-        camino.append(current)
-        current = procedencia[current]
-    camino.append(inicio)  # Agregar el nodo inicio
-    camino.reverse()  # Invertir para tener inicio -> fin
-
-    # Dibujar el camino (excluyendo inicio y fin)
-    for nodo in camino[1:-1]:  # Excluir el primer (inicio) y último (fin) nodo
-        nodo.hacer_camino()
-        dibujar()
-        pygame.time.delay(30)  # Pequeña pausa para visualización
-
-    return camino
+    def __lt__(self, otro):
+        return self.f < otro.f
 
 
 def crear_grid(filas, ancho):
@@ -208,12 +153,11 @@ def dibujar_grid(ventana, filas, ancho):
             )
 
 
-def dibujar(ventana, grid, filas, ancho):
+def dibujar(ventana, grid, filas, ancho, mostrar_valores=True, velocidad=50):
     ventana.fill(BLANCO)
     for fila in grid:
         for nodo in fila:
-            nodo.dibujar(ventana)
-
+            nodo.dibujar(ventana, mostrar_valores)
     dibujar_grid(ventana, filas, ancho)
     pygame.display.update()
 
@@ -226,13 +170,176 @@ def obtener_click_pos(pos, filas, ancho):
     return fila, col
 
 
+def get_vecinos(nodo, grid):
+    vecinos = []
+    fila, col = nodo.get_pos()
+    direcciones = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
+
+    for df, dc in direcciones:
+        nueva_fila, nueva_col = fila + df, col + dc
+        if 0 <= nueva_fila < len(grid) and 0 <= nueva_col < len(grid[0]):
+            vecinos.append(grid[nueva_fila][nueva_col])
+
+    return vecinos
+
+
+def heuristica(nodo1, nodo2):
+    f1, c1 = nodo1.get_pos()
+    f2, c2 = nodo2.get_pos()
+    return sqrt((f1 - f2) ** 2 + (c1 - c2) ** 2)
+
+
+def distancia(nodo1, nodo2):
+    f1, c1 = nodo1.get_pos()
+    f2, c2 = nodo2.get_pos()
+    if (f1 != f2) and (c1 != c2):
+        return sqrt(2)
+    return 1
+
+
+def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=True):
+    abiertos = []
+    cerrados = set()
+
+    inicio.g = 0
+    inicio.h = heuristica(inicio, fin)
+    inicio.f = inicio.g + inicio.h
+
+    heapq.heappush(abiertos, inicio)
+
+    paso = 0
+    algoritmo_terminado = False
+
+    while abiertos and not algoritmo_terminado:
+        paso += 1
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return False
+
+        nodo_actual = heapq.heappop(abiertos)
+        cerrados.add(nodo_actual)
+
+        if not nodo_actual.es_inicio() and not nodo_actual.es_fin():
+            nodo_actual.hacer_cerrado()
+
+        dibujar(
+            ventana,
+            grid,
+            filas,
+            ancho,
+            mostrar_valores,
+            velocidad,
+        )
+        pygame.time.delay(velocidad)
+
+        if nodo_actual == fin:
+            camino = []
+            while nodo_actual:
+                camino.append(nodo_actual)
+                nodo_actual = nodo_actual.padre
+
+            for i, nodo in enumerate(camino):
+                if not nodo.es_inicio() and not nodo.es_fin():
+                    nodo.hacer_camino()
+                dibujar(
+                    ventana,
+                    grid,
+                    filas,
+                    ancho,
+                    mostrar_valores,
+                    velocidad,
+                )
+                pygame.time.delay(velocidad // 2)
+
+            return True
+
+        vecinos = get_vecinos(nodo_actual, grid)
+
+        for i, vecino in enumerate(vecinos):
+            if (
+                not vecino.es_inicio()
+                and not vecino.es_fin()
+                and not vecino.es_pared()
+                and vecino not in cerrados
+            ):
+                vecino.hacer_visitado()
+
+            dibujar(
+                ventana,
+                grid,
+                filas,
+                ancho,
+                mostrar_valores,
+                velocidad,
+            )
+            pygame.time.delay(velocidad // 2)
+
+            if vecino.es_pared() or vecino in cerrados:
+                continue
+
+            g_tentativo = nodo_actual.g + distancia(nodo_actual, vecino)
+
+            if g_tentativo < vecino.g:
+                vecino.padre = nodo_actual
+                vecino.g = g_tentativo
+                vecino.h = heuristica(vecino, fin)
+                vecino.f = vecino.g + vecino.h
+
+                if vecino not in abiertos:
+                    heapq.heappush(abiertos, vecino)
+                    if not vecino.es_fin():
+                        vecino.hacer_abierto()
+
+            dibujar(
+                ventana,
+                grid,
+                filas,
+                ancho,
+                mostrar_valores,
+                velocidad,
+            )
+            pygame.time.delay(velocidad // 2)
+
+    dibujar(ventana, grid, filas, ancho, mostrar_valores, velocidad)
+    pygame.time.delay(1000)
+    return False
+
+
+def generar_mapa_random(grid, filas, densidad=0.3):
+    for fila in grid:
+        for nodo in fila:
+            nodo.restablecer()
+
+    for i in range(filas):
+        for j in range(filas):
+            if random.random() < densidad:
+                grid[i][j].hacer_pared()
+
+
+def resetear_valores(grid):
+    for fila in grid:
+        for nodo in fila:
+            if not nodo.es_pared() and not nodo.es_inicio() and not nodo.es_fin():
+                nodo.restablecer()
+            else:
+                nodo.g = float("inf")
+                nodo.h = 0
+                nodo.f = float("inf")
+                nodo.padre = None
+                nodo.visitado = False
+                nodo.procesado = False
+
+
 def main(ventana, ancho):
-    FILAS = 8
+    FILAS = 10
     grid = crear_grid(FILAS, ancho)
 
     inicio = None
     fin = None
-    ejecutado = False
+    algoritmo_corriendo = False
 
     corriendo = True
 
@@ -242,83 +349,55 @@ def main(ventana, ancho):
             if event.type == pygame.QUIT:
                 corriendo = False
 
-            if ejecutado:
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
-                    inicio = None
-                    fin = None
-                    grid = crear_grid(FILAS, ancho)
-                    ejecutado = False
-                continue
-
-            if pygame.mouse.get_pressed()[0]:  # Click izquierdo
-                pos = pygame.mouse.get_pos()
-                fila, col = obtener_click_pos(pos, FILAS, ancho)
-                # Verificar que las coordenadas estén dentro del grid
-                if 0 <= fila < FILAS and 0 <= col < FILAS:
-                    nodo = grid[fila][col]
-                    if not inicio and nodo != fin:
-                        inicio = nodo
-                        inicio.hacer_inicio()
-                        print(f"📍 Nodo inicio establecido en: {inicio.get_id()}")
-
-                    elif not fin and nodo != inicio:
-                        fin = nodo
-                        fin.hacer_fin()
-                        print(f"🎯 Nodo fin establecido en: {fin.get_id()}")
-
-                    elif nodo != fin and nodo != inicio:
-                        nodo.hacer_pared()
-                        print(f"🧱 Pared colocada en: {nodo.get_id()}")
-
-            elif pygame.mouse.get_pressed()[2]:  # Click derecho
-                pos = pygame.mouse.get_pos()
-                fila, col = obtener_click_pos(pos, FILAS, ancho)
-                # Verificar que las coordenadas estén dentro del grid
-                if 0 <= fila < FILAS and 0 <= col < FILAS:
-                    nodo = grid[fila][col]
-                    nodo.restablecer()
-                    if nodo == inicio:
-                        print(f"❌ Nodo inicio removido de: {inicio.get_id()}")
-                        inicio = None
-                    elif nodo == fin:
-                        print(f"❌ Nodo fin removido de: {fin.get_id()}")
-                        fin = None
-                    else:
-                        print(f"🧹 Nodo limpiado en: {nodo.get_id()}")
-
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and inicio and fin:
-                    print(f"\n🚀 Iniciando búsqueda del camino más corto...")
-                    print(f"Desde: {inicio.get_id()} → Hasta: {fin.get_id()}")
+                if event.key == pygame.K_SPACE:
+                    if inicio and fin:
+                        resetear_valores(grid)
+                        algoritmo_corriendo = True
+                        if a_star(
+                            grid, inicio, fin, ventana, ancho, FILAS, velocidad=50
+                        ):
+                            algoritmo_corriendo = False
+                        else:
+                            corriendo = False
 
-                    for fila in grid:
-                        for nodo in fila:
-                            nodo.actualizar_vecinos(grid)
+                elif event.key == pygame.K_q:
+                    corriendo = False
 
-                    algoritmo_a_estella(
-                        lambda: dibujar(ventana, grid, FILAS, ancho), grid, inicio, fin
-                    )
-                    ejecutado = True
-
-                if event.key == pygame.K_c:
-                    print("\n🧹 Grid limpiado - Comenzando de nuevo")
+                elif event.key == pygame.K_r:
                     inicio = None
                     fin = None
-                    grid = crear_grid(FILAS, ancho)
-                    ejecutado = False
+                    generar_mapa_random(grid, FILAS, 0.25)
+
+            if not algoritmo_corriendo:
+                if pygame.mouse.get_pressed()[0]:
+                    pos = pygame.mouse.get_pos()
+                    fila, col = obtener_click_pos(pos, FILAS, ancho)
+                    if 0 <= fila < FILAS and 0 <= col < FILAS:
+                        nodo = grid[fila][col]
+                        if not inicio and nodo != fin:
+                            inicio = nodo
+                            inicio.hacer_inicio()
+
+                        elif not fin and nodo != inicio:
+                            fin = nodo
+                            fin.hacer_fin()
+
+                        elif nodo != fin and nodo != inicio:
+                            nodo.hacer_pared()
+
+                elif pygame.mouse.get_pressed()[2]:
+                    pos = pygame.mouse.get_pos()
+                    fila, col = obtener_click_pos(pos, FILAS, ancho)
+                    if 0 <= fila < FILAS and 0 <= col < FILAS:
+                        nodo = grid[fila][col]
+                        nodo.restablecer()
+                        if nodo == inicio:
+                            inicio = None
+                        elif nodo == fin:
+                            fin = None
 
     pygame.quit()
 
 
-if __name__ == "__main__":
-    print("=" * 60)
-    print("VISUALIZADOR DE ALGORITMO A* - ENCONTRADOR DE CAMINOS")
-    print("=" * 60)
-    print("INSTRUCCIONES:")
-    print("• Click IZQUIERDO: Colocar nodos (inicio → fin → paredes)")
-    print("• Click DERECHO: Eliminar nodos")
-    print("• ESPACIO: Ejecutar algoritmo A*")
-    print("• C: Limpiar grid y comenzar de nuevo")
-    print("• Cada casilla muestra su ID (fila-columna)")
-    print("=" * 60)
-    main(VENTANA, ANCHO_VENTANA)
+main(VENTANA, ANCHO_VENTANA)
