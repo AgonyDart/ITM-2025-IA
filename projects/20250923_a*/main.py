@@ -3,11 +3,11 @@ import heapq
 from math import sqrt
 import random
 
-ANCHO_VENTANA = 800
+ANCHO_VENTANA = 1200
 VENTANA = pygame.display.set_mode((ANCHO_VENTANA, ANCHO_VENTANA))
 pygame.display.set_caption("A*")
 pygame.font.init()
-FUENTE_PEQUEÑA = pygame.font.SysFont("Arial", 20)
+FUENTE_PEQUEÑA = pygame.font.SysFont("Arial", 24)
 
 BLANCO = (255, 255, 255)
 NEGRO = (0, 0, 0)
@@ -52,10 +52,10 @@ class Nodo:
         return self.color == PURPURA
 
     def es_abierto(self):
-        return self.color == AMARILLO
+        return self.color == CELESTE
 
     def es_cerrado(self):
-        return self.color == ROJO
+        return self.color == AMARILLO
 
     def es_camino(self):
         return self.color == VERDE
@@ -82,7 +82,7 @@ class Nodo:
 
     def hacer_cerrado(self):
         if not self.es_inicio() and not self.es_fin():
-            self.color = ROJO
+            self.color = AMARILLO
 
     def hacer_camino(self):
         if not self.es_inicio() and not self.es_fin():
@@ -96,7 +96,7 @@ class Nodo:
             and not self.es_cerrado()
             and not self.es_camino()
         ):
-            self.color = AMARILLO
+            self.color = AZUL
 
     def hacer_procesado(self):
         if not self.es_inicio() and not self.es_fin() and not self.es_cerrado():
@@ -120,13 +120,13 @@ class Nodo:
         ):
             if self.f != float("inf"):
                 texto_f = FUENTE_PEQUEÑA.render(f"f:{self.f:.0f}", True, NEGRO)
-                ventana.blit(texto_f, (self.x + 2, self.y + 2))
+                ventana.blit(texto_f, (self.x + 4, self.y + 4))
             if self.g != float("inf"):
                 texto_g = FUENTE_PEQUEÑA.render(f"g:{self.g:.0f}", True, NEGRO)
-                ventana.blit(texto_g, (self.x + 2, self.y + 12))
+                ventana.blit(texto_g, (self.x + 4, self.y + 24))
             if self.h > 0:
                 texto_h = FUENTE_PEQUEÑA.render(f"h:{self.h:.0f}", True, NEGRO)
-                ventana.blit(texto_h, (self.x + 2, self.y + 22))
+                ventana.blit(texto_h, (self.x + 4, self.y + 48))
 
     def __lt__(self, otro):
         return self.f < otro.f
@@ -198,85 +198,55 @@ def distancia(nodo1, nodo2):
 
 
 def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=True):
+    count = 0
     abiertos = []
+
+    heapq.heappush(abiertos, (0, inicio.h, count, inicio))
+
     cerrados = set()
 
     inicio.g = 0
     inicio.h = heuristica(inicio, fin)
     inicio.f = inicio.g + inicio.h
 
-    heapq.heappush(abiertos, inicio)
-
-    paso = 0
     algoritmo_terminado = False
 
     while abiertos and not algoritmo_terminado:
-        paso += 1
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return False
 
-        nodo_actual = heapq.heappop(abiertos)
+        nodo_actual = heapq.heappop(abiertos)[3]
+
+        if nodo_actual in cerrados:
+            continue
+
         cerrados.add(nodo_actual)
 
         if not nodo_actual.es_inicio() and not nodo_actual.es_fin():
             nodo_actual.hacer_cerrado()
 
-        dibujar(
-            ventana,
-            grid,
-            filas,
-            ancho,
-            mostrar_valores,
-            velocidad,
-        )
+        dibujar(ventana, grid, filas, ancho, mostrar_valores, velocidad)
         pygame.time.delay(velocidad)
 
         if nodo_actual == fin:
             camino = []
-            while nodo_actual:
-                camino.append(nodo_actual)
-                nodo_actual = nodo_actual.padre
+            temp = nodo_actual
+            while temp:
+                camino.append(temp)
+                temp = temp.padre
 
-            for i, nodo in enumerate(camino):
+            for nodo in camino:
                 if not nodo.es_inicio() and not nodo.es_fin():
                     nodo.hacer_camino()
-                dibujar(
-                    ventana,
-                    grid,
-                    filas,
-                    ancho,
-                    mostrar_valores,
-                    velocidad,
-                )
+                dibujar(ventana, grid, filas, ancho, mostrar_valores, velocidad)
                 pygame.time.delay(velocidad // 2)
-
             return True
 
         vecinos = get_vecinos(nodo_actual, grid)
-
-        for i, vecino in enumerate(vecinos):
-            if (
-                not vecino.es_inicio()
-                and not vecino.es_fin()
-                and not vecino.es_pared()
-                and vecino not in cerrados
-            ):
-                vecino.hacer_visitado()
-
-            dibujar(
-                ventana,
-                grid,
-                filas,
-                ancho,
-                mostrar_valores,
-                velocidad,
-            )
-            pygame.time.delay(velocidad // 2)
-
+        for vecino in vecinos:
             if vecino.es_pared() or vecino in cerrados:
                 continue
 
@@ -285,26 +255,15 @@ def a_star(grid, inicio, fin, ventana, ancho, filas, velocidad, mostrar_valores=
             if g_tentativo < vecino.g:
                 vecino.padre = nodo_actual
                 vecino.g = g_tentativo
-                vecino.h = heuristica(vecino, fin)
+                vecino.h = heuristica(vecino, fin) * 1.5
                 vecino.f = vecino.g + vecino.h
 
-                if vecino not in abiertos:
-                    heapq.heappush(abiertos, vecino)
-                    if not vecino.es_fin():
-                        vecino.hacer_abierto()
+                if not vecino.es_fin():
+                    vecino.hacer_abierto()
 
-            dibujar(
-                ventana,
-                grid,
-                filas,
-                ancho,
-                mostrar_valores,
-                velocidad,
-            )
-            pygame.time.delay(velocidad // 2)
+                count += 1
+                heapq.heappush(abiertos, (vecino.f, vecino.h, count, vecino))
 
-    dibujar(ventana, grid, filas, ancho, mostrar_valores, velocidad)
-    pygame.time.delay(1000)
     return False
 
 
