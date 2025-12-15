@@ -55,7 +55,7 @@ class Nodo:
         return self.color == AMARILLO
 
     def es_cerrado(self):
-        return self.color == PURPURA
+        return self.color == ROJO
 
     def es_camino(self):
         return self.color == VERDE
@@ -153,7 +153,7 @@ def dibujar_grid(ventana, filas, ancho):
             )
 
 
-def dibujar(ventana, grid, filas, ancho, mostrar_valores=True, velocidad=50):
+def dibujar(ventana, grid, filas, ancho, mostrar_valores=True, velocidad=1):
     ventana.fill(BLANCO)
     for fila in grid:
         for nodo in fila:
@@ -334,7 +334,7 @@ def resetear_valores(grid):
 
 
 def main(ventana, ancho):
-    FILAS = 10
+    FILAS = 11
     grid = crear_grid(FILAS, ancho)
 
     inicio = None
