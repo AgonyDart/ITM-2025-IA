@@ -32,7 +32,7 @@ def resize_images(input_folder, output_folder, size=(128, 128)):
 
 
 if __name__ == "__main__":
-    input_dir = "C:\\Users\\angel\\Downloads\\data\\Data"
-    output_dir = "C:\\Users\\angel\\Downloads\\data\\gato"
+    input_dir = r"C:\Users\angel\Downloads\data\dataset_final\mariquitas"
+    output_dir = r"C:\Users\angel\Downloads\data\mariquitas_resized"
 
     resize_images(input_dir, output_dir)
