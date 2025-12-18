@@ -15,7 +15,7 @@ torch.cuda.empty_cache()
 
 model = FastLanguageModel.get_peft_model(
     model,
-    r=8,
+    r=16,
     target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
     lora_alpha=16,
     lora_dropout=0,
@@ -35,8 +35,8 @@ trainer = SFTTrainer(
         per_device_train_batch_size=1,
         gradient_accumulation_steps=8,
         warmup_steps=5,
-        max_steps=50,
-        learning_rate=2e-4,
+        max_steps=300,
+        learning_rate=3e-4,
         fp16=True,
         logging_steps=1,
         output_dir="outputs",
